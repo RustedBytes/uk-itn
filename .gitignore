@@ -12,3 +12,4 @@ build/
 *.egg-info/
 target/
 grammars_export/
+ukrainian_itn/_rust*.so

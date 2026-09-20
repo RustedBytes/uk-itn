@@ -36,7 +36,6 @@ ukrainian-itn = "ukrainian_itn.__main__:main"
 
 [dependency-groups]
 dev = [
-    "pynini>=2.1.6",
     "pytest>=7.4.4",
     "ruff>=0.15.20",
 ]

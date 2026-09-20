@@ -31,7 +31,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install locked dependencies
-        run: uv sync --locked --python "${{ matrix.python-version }}"
+        run: uv sync --locked --extra grammar --python "${{ matrix.python-version }}"
       - name: Run tests
         run: uv run --python "${{ matrix.python-version }}" pytest -q
       - name: Lint
@@ -129,7 +129,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
       - name: Install locked Python dependencies
-        run: uv sync --locked --python 3.13
+        run: uv sync --locked --extra grammar --python 3.13
       - name: Export grammars
         run: uv run python -m ukrainian_itn.export grammars_export
       - name: Test and build Rust library and CLI

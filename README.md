@@ -134,7 +134,8 @@ This returns `tokens { measure { negative: "true" integer_part: "5" fractional_p
 ## Development
 
 ```shell
-uv sync                # install test and grammar-development dependencies
+uv sync                         # install the native package and standard test tools
+uv sync --extra grammar         # additionally install Pynini for grammar work/full tests
 uv run pytest          # run tests
 uv run ruff check .    # lint
 uv build               # build sdist + wheel
