@@ -17,9 +17,16 @@ impl PyInverseNormalizer {
             .map_err(|error| PyOSError::new_err(format!("{error:#}")))
     }
 
-    fn normalize(&self, py: Python<'_>, text: &str) -> PyResult<String> {
-        py.detach(|| self.inner.normalize(text))
-            .map_err(|error| PyValueError::new_err(format!("{error:#}")))
+    #[pyo3(signature = (text, json=false))]
+    fn normalize(&self, py: Python<'_>, text: &str, json: bool) -> PyResult<String> {
+        py.detach(|| {
+            if json {
+                self.inner.normalize_json(text)
+            } else {
+                self.inner.normalize(text)
+            }
+        })
+        .map_err(|error| PyValueError::new_err(format!("{error:#}")))
     }
 
     fn normalize_or_passthrough(&self, py: Python<'_>, text: &str) -> String {

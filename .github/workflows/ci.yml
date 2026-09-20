@@ -87,6 +87,8 @@ jobs:
                   "ukrainian_itn/py.typed",
                   "ukrainian_itn/data/month.tsv",
                   "ukrainian_itn/data/measurements.tsv",
+                  "ukrainian_itn/grammars/ukrainian_itn_tagger.fst",
+                  "ukrainian_itn/grammars/ukrainian_itn_verbalizer.fst",
               }
               missing = sorted(required - names)
               if missing:
@@ -99,9 +101,17 @@ jobs:
       - name: Install wheel in an isolated environment
         run: |
           uv venv /tmp/ukrainian-itn-wheel
-          uv pip install --python /tmp/ukrainian-itn-wheel/bin/python dist/*.whl
+          uv pip install --no-deps --python /tmp/ukrainian-itn-wheel/bin/python dist/*.whl
           cd /tmp
-          /tmp/ukrainian-itn-wheel/bin/python -c 'from ukrainian_itn import normalize; assert normalize("сто гривень") == "₴100"'
+          /tmp/ukrainian-itn-wheel/bin/python - <<'PY'
+          import importlib.util
+          from ukrainian_itn import InverseNormalizer, normalize
+
+          assert importlib.util.find_spec("pynini") is None
+          assert normalize("сто гривень") == "₴100"
+          assert normalize("сьома година двадцять п'ять хвилин", json=True) == '[{"time": "07:25"}]'
+          assert InverseNormalizer().normalize("двадцять дві тисячі сто один") == "22101"
+          PY
 
   rust:
     name: Rust build and Python parity

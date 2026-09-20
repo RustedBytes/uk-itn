@@ -1,6 +1,8 @@
-# WFST for Ukrainian ITN
+# Ukrainian ITN
 
-WFST-based Inverse Text Normalization (ITN) for Ukrainian, built on NVIDIA NeMo grammars and Pynini.
+Fast WFST-based Inverse Text Normalization (ITN) for Ukrainian. The Python package
+uses a Rust runtime and ships with compiled grammars, so using it does not require
+Pynini, OpenFST, or a C++ toolchain.
 
 Supported semiotic classes: cardinal, ordinal, decimal, fraction, measure, money, date, time,
 telephone, electronic (e-mail/URL), century (Roman numerals), number sign (№), ranges
@@ -15,16 +17,11 @@ without changing the spelling or case of ordinary words.
 ## Installation
 
 ```shell
-brew install openfst   # needed to build pynini
-
-export CPLUS_INCLUDE_PATH="/opt/homebrew/include:$CPLUS_INCLUDE_PATH"
-export LIBRARY_PATH="/opt/homebrew/lib:$LIBRARY_PATH"
-
-uv sync
+pip install ukrainian_itn
 ```
 
 Installing from source also requires a current Rust toolchain. Published wheels include the
-compiled Rust extension.
+compiled extension and grammar files.
 
 ## Usage
 
@@ -40,8 +37,8 @@ normalize("третя година дня за київським часом")  
 normalize("підключи ю ес бі та вай фай")  # підключи USB та Wi-Fi
 ```
 
-The grammars are built lazily on the first call (several seconds) and cached for the
-lifetime of the process; subsequent calls take milliseconds. `normalize` is thread-safe.
+The bundled grammars are loaded lazily on the first call and cached for the lifetime of
+the process. `normalize` is thread-safe.
 
 ### From command line
 
@@ -78,11 +75,13 @@ contain quotes, backslashes, control characters, or non-BMP Unicode.
 
 ## Rust runtime
 
-The compiled grammars can be exported and used from Rust with
-[rustfst](https://crates.io/crates/rustfst) (no Python at runtime):
+The reusable crate uses [rustfst](https://crates.io/crates/rustfst) and can be embedded
+in another Rust application without Python or PyO3 at runtime. To regenerate/export
+grammars, install the optional grammar tooling first:
 
 ```shell
-uv run python -m ukrainian_itn.export grammars_export
+pip install "ukrainian_itn[grammar]"
+python -m ukrainian_itn.export grammars_export
 cargo test
 cargo build --release
 echo "двадцять дві тисячі сто один" | ./target/release/ukrainian_itn_cli grammars_export  # 22101
@@ -112,11 +111,17 @@ that feature when building the Python wheel; ordinary Rust builds leave it disab
 Backend-specific Python types remain internal so the public Python API is
 implementation-independent.
 
-## How it works
+## Grammar development
 
-We have two kinds of FST: taggers and verbalizers.
+Pynini is only used to edit, test, and recompile the grammar definitions. It is not
+imported by the public Python API and is not an installation dependency. Install it with:
 
-This is a tagger:
+```shell
+pip install "ukrainian_itn[grammar]"
+```
+
+On platforms without a Pynini wheel, OpenFST development headers may also be needed.
+The grammar tooling exposes taggers and verbalizers directly. For example:
 
 ```python
 from ukrainian_itn.wfst import get_normalizer, apply_fst_text
@@ -124,23 +129,12 @@ from ukrainian_itn.wfst import get_normalizer, apply_fst_text
 apply_fst_text("мінус п'ять цілих одна десята відсотка", get_normalizer().classify.fst)
 ```
 
-will return `tokens { measure { negative: "true" integer_part: "5" fractional_part: "1" units: "%" } }`
-
-And this is a verbalizer:
-
-```python
-from ukrainian_itn.wfst import get_normalizer, apply_fst_text
-
-apply_fst_text('tokens { measure { negative: "true" integer_part: "5" fractional_part: "1" units: "%" } }',
-               get_normalizer().verbalize_final.fst)
-```
-
-will return `-5.1 %`
+This returns `tokens { measure { negative: "true" integer_part: "5" fractional_part: "1" units: "%" } }`.
 
 ## Development
 
 ```shell
-uv sync                # install deps (dev group included)
+uv sync                # install test and grammar-development dependencies
 uv run pytest          # run tests
 uv run ruff check .    # lint
 uv build               # build sdist + wheel

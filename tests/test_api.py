@@ -5,7 +5,7 @@ import sys
 import pytest
 
 import ukrainian_itn
-from ukrainian_itn.wfst import InverseNormalizer, get_normalizer, normalize
+from ukrainian_itn._api import InverseNormalizer, get_normalizer, normalize
 
 
 def test_package_exports():

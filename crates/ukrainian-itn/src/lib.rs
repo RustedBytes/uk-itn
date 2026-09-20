@@ -32,6 +32,40 @@ impl InverseNormalizer {
     }
 
     pub fn normalize(&self, text: &str) -> Result<String> {
+        let tagged = self.classify(text)?;
+        let verbalized = rewrite_shortest_path(&self.verbalizer, &tagged)
+            .context("verbalizer grammar does not accept the input")?;
+        Ok(attach_punctuation(verbalized))
+    }
+
+    /// Normalize a sentence into the package's JSON token representation.
+    pub fn normalize_json(&self, text: &str) -> Result<String> {
+        let tagged = self.classify(text)?;
+        let mut objects = Vec::new();
+        for token in split_tokens(&tagged)? {
+            let inner = token
+                .strip_prefix("tokens {")
+                .and_then(|value| value.strip_suffix('}'))
+                .ok_or_else(|| anyhow!("malformed classified token"))?
+                .trim();
+            let name = inner
+                .split_once(|c: char| c.is_whitespace() || c == '{')
+                .map_or(inner, |(name, _)| name);
+            if name.is_empty() {
+                bail!("classified token has no type");
+            }
+            let value = rewrite_shortest_path(&self.verbalizer, token)
+                .context("verbalizer grammar does not accept a classified token")?;
+            objects.push(format!(
+                "{{\"{}\": \"{}\"}}",
+                escape_json(name),
+                escape_json(&value)
+            ));
+        }
+        Ok(format!("[{}]", objects.join(", ")))
+    }
+
+    fn classify(&self, text: &str) -> Result<String> {
         let normalized = normalize_whitespace(text);
         if normalized.is_empty() {
             bail!("input text is empty");
@@ -43,15 +77,91 @@ impl InverseNormalizer {
             .context("tagger grammar does not accept the input")?;
         tagged = reorder(&tagged);
         restore_word_orthography(&restorations, &mut tagged);
-
-        let verbalized = rewrite_shortest_path(&self.verbalizer, &tagged)
-            .context("verbalizer grammar does not accept the input")?;
-        Ok(attach_punctuation(verbalized))
+        Ok(tagged)
     }
 
     pub fn normalize_or_passthrough(&self, text: &str) -> String {
         self.normalize(text).unwrap_or_else(|_| text.to_owned())
     }
+}
+
+fn split_tokens(tagged: &str) -> Result<Vec<&str>> {
+    let mut tokens = Vec::new();
+    let mut offset = 0;
+    while offset < tagged.len() {
+        let remaining = &tagged[offset..];
+        let leading = remaining.len() - remaining.trim_start().len();
+        offset += leading;
+        if offset == tagged.len() {
+            break;
+        }
+        if !tagged[offset..].starts_with("tokens {") {
+            bail!("malformed classified output at byte {offset}");
+        }
+
+        let start = offset;
+        let mut depth = 0usize;
+        let mut quoted = false;
+        let mut escaped = false;
+        let mut end = None;
+        for (relative, character) in tagged[start..].char_indices() {
+            if escaped {
+                escaped = false;
+                continue;
+            }
+            if quoted && character == '\\' {
+                escaped = true;
+                continue;
+            }
+            if character == '"' {
+                quoted = !quoted;
+                continue;
+            }
+            if quoted {
+                continue;
+            }
+            match character {
+                '{' => depth += 1,
+                '}' => {
+                    if depth == 0 {
+                        bail!("unbalanced classified output at byte {}", start + relative);
+                    }
+                    depth -= 1;
+                    if depth == 0 {
+                        end = Some(start + relative + character.len_utf8());
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        let end = end.ok_or_else(|| anyhow!("unterminated classified token at byte {start}"))?;
+        tokens.push(&tagged[start..end]);
+        offset = end;
+    }
+    Ok(tokens)
+}
+
+fn escape_json(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\u{08}' => escaped.push_str("\\b"),
+            '\u{0C}' => escaped.push_str("\\f"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            '\u{00}'..='\u{1F}' => {
+                use std::fmt::Write;
+                write!(escaped, "\\u{:04x}", character as u32)
+                    .expect("writing to String cannot fail");
+            }
+            _ => escaped.push(character),
+        }
+    }
+    escaped
 }
 
 fn load_grammar(path: &Path) -> Result<Grammar> {
@@ -286,6 +396,25 @@ mod tests {
 
         let error = InverseNormalizer::from_files(invalid, valid).unwrap_err();
         assert!(error.to_string().contains("non-byte label"));
+        Ok(())
+    }
+
+    #[test]
+    fn splits_classified_tokens_and_escapes_json() -> Result<()> {
+        let classified = concat!(
+            "tokens { word { name: \"a } b\" } } ",
+            "tokens { cardinal { integer: \"2\" } }"
+        );
+        assert_eq!(
+            split_tokens(classified)?,
+            [
+                "tokens { word { name: \"a } b\" } }",
+                "tokens { cardinal { integer: \"2\" } }",
+            ]
+        );
+        assert_eq!(escape_json("a\"\\\n\u{01}🙂"), "a\\\"\\\\\\n\\u0001🙂");
+        assert!(split_tokens("not a token").is_err());
+        assert!(split_tokens("tokens { word {").is_err());
         Ok(())
     }
 }

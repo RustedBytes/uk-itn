@@ -8,6 +8,9 @@
   and retained the standalone `ukrainian_itn_cli` for exported grammars.
 - Added an optional `python` feature to the reusable `ukrainian-itn` crate. Its default
   build is PyO3-free, while Maturin enables the feature for Python wheels.
+- Bundled the compiled tagger and verbalizer in Python wheels and moved Pynini to the
+  optional `grammar` extra. The public Python API and JSON output now run entirely on
+  the native core without Pynini or OpenFST installed.
 
 ### v0.3.0
 

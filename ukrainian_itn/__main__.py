@@ -15,7 +15,7 @@ def main(argv=None) -> int:
                         version=f'%(prog)s {__import__("ukrainian_itn").__version__}')
     args = parser.parse_args(argv)
 
-    from ukrainian_itn.wfst import normalize
+    from ukrainian_itn import normalize
 
     status = 0
     for line in sys.stdin:

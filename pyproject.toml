@@ -9,12 +9,12 @@ authors = [
     { name = "Vasyl Spachynskyi", email = "vspachyn@gmail.com" },
     { name = "Yehor Smoliakov", email = "egorsmkv@gmail.com" },
 ]
-description = "WFST for Ukrainian Inverse Text Normalization (ITN) based on NVIDIA NeMo and Pynini"
+description = "Fast Ukrainian Inverse Text Normalization powered by Rust WFSTs"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
-keywords = ["itn", "inverse-text-normalization", "ukrainian", "wfst", "pynini", "openfst"]
+keywords = ["itn", "inverse-text-normalization", "ukrainian", "wfst", "rust"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Rust",
@@ -22,19 +22,21 @@ classifiers = [
     "Natural Language :: Ukrainian",
     "Topic :: Text Processing :: Linguistic",
 ]
-dependencies = [
-    "pynini>=2.1.6",
-]
+dependencies = []
+
+[project.optional-dependencies]
+grammar = ["pynini>=2.1.6"]
 
 [project.scripts]
 ukrainian-itn = "ukrainian_itn.__main__:main"
 
 [project.urls]
-"Homepage" = "https://github.com/lociko/ukraine_itn_wfst"
-"Bug Tracker" = "https://github.com/lociko/ukraine_itn_wfst/issues"
+"Homepage" = "https://github.com/RustedBytes/uk-itn"
+"Bug Tracker" = "https://github.com/RustedBytes/uk-itn/issues"
 
 [dependency-groups]
 dev = [
+    "pynini>=2.1.6",
     "pytest>=7.4.4",
     "ruff>=0.15.20",
 ]

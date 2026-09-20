@@ -230,22 +230,27 @@ wheels = [
 name = "ukrainian-itn"
 version = "0.3.0"
 source = { editable = "." }
-dependencies = [
+
+[package.optional-dependencies]
+grammar = [
     { name = "pynini" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pynini" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pynini", specifier = ">=2.1.6" }]
+requires-dist = [{ name = "pynini", marker = "extra == 'grammar'", specifier = ">=2.1.6" }]
+provides-extras = ["grammar"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "pynini", specifier = ">=2.1.6" },
     { name = "pytest", specifier = ">=7.4.4" },
     { name = "ruff", specifier = ">=0.15.20" },
 ]

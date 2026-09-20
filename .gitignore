@@ -12,4 +12,3 @@ build/
 *.egg-info/
 target/
 grammars_export/
-ukrainian_itn/grammars/

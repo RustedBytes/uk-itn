@@ -6,8 +6,8 @@ Public API::
 
     normalize("двадцять дві тисячі сто один")  # "22101"
 
-Grammar construction is deferred until the first call, so importing
-this package is cheap.
+The compiled grammars are bundled with the package and evaluated by the native
+runtime, so Pynini is not required for normal use.
 """
 
 __version__ = "0.3.0"
@@ -16,10 +16,8 @@ __all__ = ["normalize", "InverseNormalizer", "__version__"]
 
 
 def __getattr__(name):
-    # Lazy re-export: building the grammars takes seconds, so avoid it
-    # unless the caller actually needs the normalizer.
     if name in ("normalize", "InverseNormalizer"):
-        from ukrainian_itn import wfst
+        from ukrainian_itn import _api
 
-        return getattr(wfst, name)
+        return getattr(_api, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
