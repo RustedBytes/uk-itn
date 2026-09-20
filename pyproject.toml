@@ -1,0 +1,56 @@
+[build-system]
+requires = ["maturin>=1.15,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ukrainian_itn"
+version = "0.3.0"
+authors = [
+    { name = "Vasyl Spachynskyi", email = "vspachyn@gmail.com" },
+    { name = "Yehor Smoliakov", email = "egorsmkv@gmail.com" },
+]
+description = "WFST for Ukrainian Inverse Text Normalization (ITN) based on NVIDIA NeMo and Pynini"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+keywords = ["itn", "inverse-text-normalization", "ukrainian", "wfst", "pynini", "openfst"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Operating System :: OS Independent",
+    "Natural Language :: Ukrainian",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "pynini>=2.1.6",
+]
+
+[project.scripts]
+ukrainian-itn = "ukrainian_itn.__main__:main"
+
+[project.urls]
+"Homepage" = "https://github.com/lociko/ukraine_itn_wfst"
+"Bug Tracker" = "https://github.com/lociko/ukraine_itn_wfst/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4",
+    "ruff>=0.15.20",
+]
+
+[tool.maturin]
+bindings = "pyo3"
+module-name = "ukrainian_itn._rust"
+python-source = "."
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E741"]

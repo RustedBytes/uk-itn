@@ -1,0 +1,15 @@
+/.idea/
+/env/
+
+__pycache__/
+/tests/__pycache__/
+
+.DS_Store
+ukrainian_itn.egg-info
+
+.venv/
+build/
+*.egg-info/
+target/
+grammars_export/
+ukrainian_itn/grammars/
