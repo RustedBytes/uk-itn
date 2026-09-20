@@ -88,8 +88,29 @@ cargo build --release
 echo "двадцять дві тисячі сто один" | ./target/release/ukrainian_itn_cli grammars_export  # 22101
 ```
 
-The Rust runtime is also compiled into the Python wheel through PyO3. Backend-specific
-types are kept internal so the public Python API remains implementation-independent.
+The reusable crate lives under `crates/ukrainian-itn`. Its default feature set is
+PyO3-free, so another Rust application can depend on it directly:
+
+```toml
+[dependencies]
+ukrainian-itn = { path = "../itn-uk/crates/ukrainian-itn" }
+```
+
+```rust
+use ukrainian_itn::InverseNormalizer;
+
+let normalizer = InverseNormalizer::from_files(
+    "grammars_export/ukrainian_itn_tagger.fst",
+    "grammars_export/ukrainian_itn_verbalizer.fst",
+)?;
+assert_eq!(normalizer.normalize("двадцять дві тисячі сто один")?, "22101");
+# Ok::<(), anyhow::Error>(())
+```
+
+Python bindings are available behind the optional `python` Cargo feature. Maturin enables
+that feature when building the Python wheel; ordinary Rust builds leave it disabled.
+Backend-specific Python types remain internal so the public Python API is
+implementation-independent.
 
 ## How it works
 

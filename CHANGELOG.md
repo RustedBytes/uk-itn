@@ -6,6 +6,8 @@
 - Renamed the Python distribution and import package to `ukrainian_itn`.
 - Added an internal PyO3 binding while keeping the public Python API backend-neutral,
   and retained the standalone `ukrainian_itn_cli` for exported grammars.
+- Added an optional `python` feature to the reusable `ukrainian-itn` crate. Its default
+  build is PyO3-free, while Maturin enables the feature for Python wheels.
 
 ### v0.3.0
 

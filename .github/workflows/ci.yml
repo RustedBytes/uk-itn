@@ -69,7 +69,14 @@ jobs:
 
           with tarfile.open(sdist) as archive:
               names = archive.getnames()
-              required_suffixes = ("/Cargo.toml", "/Cargo.lock", "/src/lib.rs", "/src/main.rs")
+              required_suffixes = (
+                  "/Cargo.toml",
+                  "/Cargo.lock",
+                  "/crates/ukrainian-itn/Cargo.toml",
+                  "/crates/ukrainian-itn/src/lib.rs",
+                  "/crates/ukrainian-itn/src/main.rs",
+                  "/crates/ukrainian-itn/src/python.rs",
+              )
               missing = [suffix for suffix in required_suffixes if not any(name.endswith(suffix) for name in names)]
               if missing:
                   raise SystemExit(f"sdist is missing Rust sources: {missing}")
@@ -114,10 +121,11 @@ jobs:
       - name: Install locked Python dependencies
         run: uv sync --locked --python 3.13
       - name: Export grammars
-        run: uv run python -m ukr.export grammars_export
+        run: uv run python -m ukrainian_itn.export grammars_export
       - name: Test and build Rust library and CLI
         run: |
-          cargo test --locked
-          cargo build --release --locked
+          cargo test --workspace --locked
+          cargo clippy -p ukrainian-itn --all-targets --locked -- -D warnings
+          cargo build --release --locked -p ukrainian-itn --bin ukrainian_itn_cli
       - name: Check Python and Rust parity
         run: uv run python .github/scripts/check_rust_parity.py target/release/ukrainian_itn_cli grammars_export

@@ -2,11 +2,12 @@ use std::path::Path;
 use std::sync::OnceLock;
 
 use anyhow::{Context, Result, anyhow, bail};
-use pyo3::exceptions::{PyOSError, PyValueError};
-use pyo3::prelude::*;
 use regex::Regex;
 use rustfst::prelude::*;
 use rustfst::utils::{acceptor, decode_linear_fst};
+
+#[cfg(feature = "python")]
+mod python;
 
 type Grammar = ConstFst<TropicalWeight>;
 
@@ -193,41 +194,6 @@ fn attach_punctuation(mut text: String) -> String {
         text = text.replace(&format!("{mark} "), mark);
     }
     text
-}
-
-#[pyclass(name = "InverseNormalizer", module = "ukrainian_itn._rust", frozen)]
-struct PyInverseNormalizer {
-    inner: InverseNormalizer,
-}
-
-#[pymethods]
-impl PyInverseNormalizer {
-    #[new]
-    fn new(tagger_path: &str, verbalizer_path: &str) -> PyResult<Self> {
-        InverseNormalizer::from_files(tagger_path, verbalizer_path)
-            .map(|inner| Self { inner })
-            .map_err(|error| PyOSError::new_err(format!("{error:#}")))
-    }
-
-    fn normalize(&self, py: Python<'_>, text: &str) -> PyResult<String> {
-        py.detach(|| self.inner.normalize(text))
-            .map_err(|error| PyValueError::new_err(format!("{error:#}")))
-    }
-
-    fn normalize_or_passthrough(&self, py: Python<'_>, text: &str) -> String {
-        py.detach(|| self.inner.normalize_or_passthrough(text))
-    }
-
-    fn __repr__(&self) -> &'static str {
-        "InverseNormalizer()"
-    }
-}
-
-#[pymodule]
-#[pyo3(name = "_rust")]
-fn python_module(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_class::<PyInverseNormalizer>()?;
-    Ok(())
 }
 
 #[cfg(test)]

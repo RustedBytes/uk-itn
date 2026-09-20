@@ -41,6 +41,8 @@ dev = [
 
 [tool.maturin]
 bindings = "pyo3"
+features = ["python"]
+manifest-path = "crates/ukrainian-itn/Cargo.toml"
 module-name = "ukrainian_itn._rust"
 python-source = "."
 

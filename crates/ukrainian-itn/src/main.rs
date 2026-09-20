@@ -2,7 +2,7 @@ use std::env;
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
-use _rust::InverseNormalizer;
+use ukrainian_itn::InverseNormalizer;
 
 fn main() {
     if let Err(error) = run() {
