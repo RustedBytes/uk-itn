@@ -95,7 +95,7 @@ so another Rust application can depend on it directly:
 
 ```toml
 [dependencies]
-ukrainian-itn = { git = "https://github.com/RustedBytes/ukrainian-itn" }
+ukrainian-itn = "0.4"
 ```
 
 ```rust
