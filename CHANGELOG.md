@@ -1,13 +1,11 @@
 # Changelog
 
-### Unreleased
-
 ### v0.4.0
 
 - Replaced the C++/OpenFST runtime with a safe Rust runtime using `rustfst`.
 - Renamed the Python distribution and import package to `ukrainian_itn`.
 - Added an internal PyO3 binding while keeping the public Python API backend-neutral,
-  and retained the standalone `ukrainian_itn_cli` for exported grammars.
+  and retained the standalone `ukrainian_itn_cli` with embedded grammars by default.
 - Added an optional `python` feature to the reusable `ukrainian-itn` crate. Its default
   build is PyO3-free, while Maturin enables the feature for Python wheels.
 - Embedded the compiled tagger and verbalizer in the Rust library and moved Pynini to
