@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -17,46 +19,127 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11", "3.13"]
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+          - "3.15"
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@v6
+          allow-prereleases: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install locked dependencies
-        run: uv sync --locked --extra grammar --python "${{ matrix.python-version }}"
-      - name: Run tests
-        run: uv run --python "${{ matrix.python-version }}" pytest -q
-      - name: Lint
-        if: matrix.python-version == '3.13'
+      - name: Install package and test dependencies
+        run: uv sync --locked --python "${{ matrix.python-version }}"
+
+      - name: Test native Python runtime
+        run: uv run --python "${{ matrix.python-version }}" pytest tests/test_api.py
+
+  grammar:
+    name: Python grammar tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install grammar development dependencies
+        run: uv sync --locked --extra grammar --python "3.10"
+
+      - name: Run complete Python test suite
+        run: uv run --python "3.10" pytest
+
+  quality:
+    name: Rust and Python quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install development dependencies
+        run: uv sync --locked
+
+      - name: Check Python formatting and lint
         run: uv run ruff check .
+
+      - name: Check Rust formatting
+        run: cargo fmt --all --check
+
+      - name: Lint Rust
+        run: cargo clippy --workspace --all-features --all-targets --locked -- -D warnings
+
+      - name: Test Rust
+        run: cargo test --workspace --all-features --locked
 
   package:
     name: Build and inspect distributions
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+          python-version: "3.14"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build sdist and wheel
-        run: |
-          rm -rf dist
-          uv build
+        run: uv build
+
       - name: Verify distribution contents
         run: |
           python - <<'PY'
@@ -73,13 +156,15 @@ jobs:
                   "/Cargo.toml",
                   "/Cargo.lock",
                   "/crates/ukrainian-itn/Cargo.toml",
+                  "/crates/ukrainian-itn/grammars/ukrainian_itn_tagger.fst",
+                  "/crates/ukrainian-itn/grammars/ukrainian_itn_verbalizer.fst",
                   "/crates/ukrainian-itn/src/lib.rs",
                   "/crates/ukrainian-itn/src/main.rs",
                   "/crates/ukrainian-itn/src/python.rs",
               )
               missing = [suffix for suffix in required_suffixes if not any(name.endswith(suffix) for name in names)]
               if missing:
-                  raise SystemExit(f"sdist is missing Rust sources: {missing}")
+                  raise SystemExit(f"sdist is missing Rust sources or grammars: {missing}")
 
           with zipfile.ZipFile(wheel) as archive:
               names = set(archive.namelist())
@@ -87,20 +172,22 @@ jobs:
                   "ukrainian_itn/py.typed",
                   "ukrainian_itn/data/month.tsv",
                   "ukrainian_itn/data/measurements.tsv",
-                  "ukrainian_itn/grammars/ukrainian_itn_tagger.fst",
-                  "ukrainian_itn/grammars/ukrainian_itn_verbalizer.fst",
               }
               missing = sorted(required - names)
               if missing:
                   raise SystemExit(f"wheel is missing package data: {missing}")
               if not any(name.startswith("ukrainian_itn/_rust") for name in names):
                   raise SystemExit("wheel is missing the PyO3 extension")
+              if any(name.endswith(".fst") for name in names):
+                  raise SystemExit("wheel contains loose FST files instead of embedding them")
           PY
+
       - name: Check package metadata
         run: uvx --from twine twine check dist/*
+
       - name: Install wheel in an isolated environment
         run: |
-          uv venv /tmp/ukrainian-itn-wheel
+          uv venv /tmp/ukrainian-itn-wheel --python 3.14
           uv pip install --no-deps --python /tmp/ukrainian-itn-wheel/bin/python dist/*.whl
           cd /tmp
           /tmp/ukrainian-itn-wheel/bin/python - <<'PY'
@@ -113,29 +200,33 @@ jobs:
           assert InverseNormalizer().normalize("двадцять дві тисячі сто один") == "22101"
           PY
 
-  rust:
-    name: Rust build and Python parity
+  parity:
+    name: Python and Rust parity
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+          python-version: "3.14"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
 
-      - uses: dtolnay/rust-toolchain@stable
       - name: Install locked Python dependencies
-        run: uv sync --locked --extra grammar --python 3.13
-      - name: Export grammars
-        run: uv run python -m ukrainian_itn.export grammars_export
-      - name: Test and build Rust library and CLI
-        run: |
-          cargo test --workspace --locked
-          cargo clippy -p ukrainian-itn --all-targets --locked -- -D warnings
-          cargo build --release --locked -p ukrainian-itn --bin ukrainian_itn_cli
-      - name: Check Python and Rust parity
-        run: uv run python .github/scripts/check_rust_parity.py target/release/ukrainian_itn_cli grammars_export
+        run: uv sync --locked --python "3.14"
+
+      - name: Build Rust CLI
+        run: cargo build --release --locked -p ukrainian-itn --bin ukrainian_itn_cli
+
+      - name: Check embedded Python and Rust parity
+        run: uv run --python "3.14" python .github/scripts/check_rust_parity.py target/release/ukrainian_itn_cli

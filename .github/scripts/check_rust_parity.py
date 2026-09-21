@@ -42,12 +42,11 @@ CASES = (
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("cli", type=Path)
-    parser.add_argument("grammar_dir", type=Path)
     args = parser.parse_args()
 
     expected = [normalize(text) for text in CASES]
     completed = subprocess.run(
-        [str(args.cli), str(args.grammar_dir)],
+        [str(args.cli)],
         input="".join(f"{text}\n" for text in CASES),
         text=True,
         capture_output=True,
@@ -59,10 +58,7 @@ def main() -> int:
         print(completed.stderr, end="")
         return completed.returncode
 
-    native = NativeInverseNormalizer(
-        str(args.grammar_dir / "ukrainian_itn_tagger.fst"),
-        str(args.grammar_dir / "ukrainian_itn_verbalizer.fst"),
-    )
+    native = NativeInverseNormalizer()
     binding_results = [native.normalize(text) for text in CASES]
     failures = []
     for source, python_output, cli_output, binding_output in zip(
