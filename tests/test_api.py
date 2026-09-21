@@ -9,7 +9,7 @@ from ukrainian_itn._api import InverseNormalizer, get_normalizer, normalize
 
 
 def test_package_exports():
-    assert ukrainian_itn.__version__ == "0.3.0"
+    assert ukrainian_itn.__version__ == "0.4.0"
     assert ukrainian_itn.normalize is normalize
     assert ukrainian_itn.InverseNormalizer is InverseNormalizer
     assert "RustInverseNormalizer" not in ukrainian_itn.__all__

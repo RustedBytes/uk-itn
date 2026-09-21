@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### v0.4.0
+
 - Replaced the C++/OpenFST runtime with a safe Rust runtime using `rustfst`.
 - Renamed the Python distribution and import package to `ukrainian_itn`.
 - Added an internal PyO3 binding while keeping the public Python API backend-neutral,
