@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.4.1
+
+- Made GitHub Release asset uploads work when the tag already has a release.
+- Clarified the PyPI trusted-publisher project name for automated releases.
+
 ### v0.4.0
 
 - Replaced the C++/OpenFST runtime with a safe Rust runtime using `rustfst`.

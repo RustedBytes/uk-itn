@@ -144,11 +144,14 @@ The release workflow runs when a `v*` tag is pushed. The tag must match the vers
 `pyproject.toml`, `crates/ukrainian-itn/Cargo.toml`, and `ukrainian_itn/__init__.py`:
 
 ```shell
-git tag v0.4.0
-git push origin v0.4.0
+git tag v0.4.1
+git push origin v0.4.1
 ```
 
 It builds an sdist and ABI3 wheels for Linux (x86-64 and ARM64), macOS (Intel and Apple
 Silicon), and Windows (x86-64), publishes them to PyPI, and attaches them to a GitHub
 Release. PyPI trusted publishing must be configured for the `RustedBytes/uk-itn`
-repository, `.github/workflows/release.yml` workflow, and `pypi` environment.
+repository, `.github/workflows/release.yml` workflow, and `pypi` environment. The
+PyPI project name must be `ukrainian-itn` (the canonical form of the distribution
+metadata name `ukrainian_itn`), not the repository name `uk-itn` or the legacy
+distribution name `ukr-itn`.
