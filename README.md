@@ -141,19 +141,3 @@ uv run ruff check .    # lint
 uv build               # build sdist + wheel
 ```
 
-## Releasing
-
-The release workflow runs when a `v*` tag is pushed. The tag must match the version in
-`pyproject.toml`, `Cargo.toml`, and `ukrainian_itn/__init__.py`:
-
-```shell
-git tag v0.4.2
-git push origin v0.4.2
-```
-
-It builds an sdist and ABI3 wheels for Linux (x86-64 and ARM64), macOS (Intel and Apple
-Silicon), and Windows (x86-64), publishes them to PyPI, and attaches them to a GitHub
-Release. PyPI trusted publishing must be configured for the `RustedBytes/ukrainian-itn`
-repository, `.github/workflows/release.yml` workflow, and `pypi` environment. The
-PyPI project name must be `ukrainian-itn` (the canonical form of the distribution
-metadata name `ukrainian_itn`), not the legacy distribution name `ukr-itn`.
