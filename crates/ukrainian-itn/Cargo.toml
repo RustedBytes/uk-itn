@@ -8,6 +8,7 @@ repository = "https://github.com/lociko/ukraine_itn_wfst"
 readme = "README.md"
 keywords = ["itn", "ukrainian", "wfst", "text-normalization"]
 categories = ["text-processing"]
+include = ["src/**", "grammars/**", "README.md"]
 
 [lib]
 crate-type = ["rlib", "cdylib"]

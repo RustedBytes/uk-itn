@@ -3,4 +3,4 @@ include README.md
 recursive-include ukrainian_itn/data *.tsv
 include Cargo.toml
 include Cargo.lock
-recursive-include crates *.toml *.rs *.md
+recursive-include crates *.toml *.rs *.md *.fst

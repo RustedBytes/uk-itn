@@ -13,25 +13,26 @@ fn main() {
 
 fn run() -> anyhow::Result<()> {
     let arguments: Vec<_> = env::args_os().skip(1).collect();
-    let (tagger, verbalizer) = match arguments.as_slice() {
+    let normalizer = match arguments.as_slice() {
+        [] => InverseNormalizer::new()?,
         [directory] => {
             let directory = PathBuf::from(directory);
-            (
+            InverseNormalizer::from_files(
                 directory.join("ukrainian_itn_tagger.fst"),
                 directory.join("ukrainian_itn_verbalizer.fst"),
-            )
+            )?
         }
-        [tagger, verbalizer] => (PathBuf::from(tagger), PathBuf::from(verbalizer)),
+        [tagger, verbalizer] => {
+            InverseNormalizer::from_files(PathBuf::from(tagger), PathBuf::from(verbalizer))?
+        }
         _ => {
             eprintln!(
-                "usage: ukrainian_itn_cli <grammar_dir> | <tagger.fst> <verbalizer.fst>\n\
-                 Grammars are produced by `python -m ukrainian_itn.export`."
+                "usage: ukrainian_itn_cli [<grammar_dir> | <tagger.fst> <verbalizer.fst>]\n\
+                 With no arguments, the embedded grammars are used."
             );
             std::process::exit(2);
         }
     };
-
-    let normalizer = InverseNormalizer::from_files(tagger, verbalizer)?;
     let mut failed = false;
     for line in io::stdin().lock().lines() {
         let line = line?;

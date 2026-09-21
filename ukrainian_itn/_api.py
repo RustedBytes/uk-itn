@@ -4,21 +4,17 @@ from __future__ import annotations
 
 import os
 import threading
-from pathlib import Path
 from typing import Union
 
 from ukrainian_itn._rust import InverseNormalizer as _NativeInverseNormalizer
 
 PathLike = Union[str, os.PathLike[str]]
-_GRAMMAR_DIR = Path(__file__).with_name("grammars")
-_TAGGER_PATH = _GRAMMAR_DIR / "ukrainian_itn_tagger.fst"
-_VERBALIZER_PATH = _GRAMMAR_DIR / "ukrainian_itn_verbalizer.fst"
 
 
 class InverseNormalizer:
     """Ukrainian inverse text normalizer using compiled WFST grammars.
 
-    With no arguments, the grammars bundled in the Python wheel are used.
+    With no arguments, the grammars embedded in the native library are used.
     Both paths may be supplied to load custom grammars exported by the
     optional Pynini grammar-development tooling.
     """
@@ -31,13 +27,12 @@ class InverseNormalizer:
         if (tagger_path is None) != (verbalizer_path is None):
             raise ValueError("tagger_path and verbalizer_path must be provided together")
         if tagger_path is None:
-            tagger_path = _TAGGER_PATH
-            verbalizer_path = _VERBALIZER_PATH
-
-        self._native = _NativeInverseNormalizer(
-            os.fspath(tagger_path),
-            os.fspath(verbalizer_path),
-        )
+            self._native = _NativeInverseNormalizer()
+        else:
+            self._native = _NativeInverseNormalizer(
+                os.fspath(tagger_path),
+                os.fspath(verbalizer_path),
+            )
 
     def normalize(self, text: str, json: bool = False) -> str:
         """Normalize spoken-form Ukrainian text, optionally as token JSON."""

@@ -84,7 +84,7 @@ pip install "ukrainian_itn[grammar]"
 python -m ukrainian_itn.export grammars_export
 cargo test
 cargo build --release
-echo "двадцять дві тисячі сто один" | ./target/release/ukrainian_itn_cli grammars_export  # 22101
+echo "двадцять дві тисячі сто один" | ./target/release/ukrainian_itn_cli  # 22101
 ```
 
 The reusable crate lives under `crates/ukrainian-itn`. Its default feature set is
@@ -98,10 +98,7 @@ ukrainian-itn = { path = "../itn-uk/crates/ukrainian-itn" }
 ```rust
 use ukrainian_itn::InverseNormalizer;
 
-let normalizer = InverseNormalizer::from_files(
-    "grammars_export/ukrainian_itn_tagger.fst",
-    "grammars_export/ukrainian_itn_verbalizer.fst",
-)?;
+let normalizer = InverseNormalizer::new()?;
 assert_eq!(normalizer.normalize("двадцять дві тисячі сто один")?, "22101");
 # Ok::<(), anyhow::Error>(())
 ```

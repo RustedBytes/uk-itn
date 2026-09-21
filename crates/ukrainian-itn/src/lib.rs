@@ -11,10 +11,14 @@ mod python;
 
 type Grammar = ConstFst<TropicalWeight>;
 
+const TAGGER_FST: &[u8] = include_bytes!("../grammars/ukrainian_itn_tagger.fst");
+const VERBALIZER_FST: &[u8] = include_bytes!("../grammars/ukrainian_itn_verbalizer.fst");
+
 /// Immutable, thread-safe Ukrainian ITN runtime.
 ///
-/// The grammar files are the OpenFST binaries produced by
-/// `python -m ukrainian_itn.export`.
+/// The default grammar is embedded in the crate. Custom OpenFST binaries
+/// produced by `python -m ukrainian_itn.export` can be loaded with
+/// [`InverseNormalizer::from_files`].
 #[derive(Debug)]
 pub struct InverseNormalizer {
     tagger: Grammar,
@@ -22,12 +26,32 @@ pub struct InverseNormalizer {
 }
 
 impl InverseNormalizer {
+    /// Load the Ukrainian ITN grammars embedded in the crate.
+    pub fn new() -> Result<Self> {
+        let tagger = load_grammar(TAGGER_FST, "embedded tagger grammar")?;
+        let verbalizer = load_grammar(VERBALIZER_FST, "embedded verbalizer grammar")?;
+        Ok(Self { tagger, verbalizer })
+    }
+
+    /// Load custom OpenFST grammars from disk.
     pub fn from_files(
         tagger_path: impl AsRef<Path>,
         verbalizer_path: impl AsRef<Path>,
     ) -> Result<Self> {
-        let tagger = load_grammar(tagger_path.as_ref())?;
-        let verbalizer = load_grammar(verbalizer_path.as_ref())?;
+        let tagger_path = tagger_path.as_ref();
+        let verbalizer_path = verbalizer_path.as_ref();
+        let tagger_data = std::fs::read(tagger_path)
+            .with_context(|| format!("failed to read FST from {}", tagger_path.display()))?;
+        let verbalizer_data = std::fs::read(verbalizer_path)
+            .with_context(|| format!("failed to read FST from {}", verbalizer_path.display()))?;
+        let tagger = load_grammar(
+            &tagger_data,
+            &format!("tagger grammar at {}", tagger_path.display()),
+        )?;
+        let verbalizer = load_grammar(
+            &verbalizer_data,
+            &format!("verbalizer grammar at {}", verbalizer_path.display()),
+        )?;
         Ok(Self { tagger, verbalizer })
     }
 
@@ -164,20 +188,17 @@ fn escape_json(value: &str) -> String {
     escaped
 }
 
-fn load_grammar(path: &Path) -> Result<Grammar> {
-    let mut fst = VectorFst::<TropicalWeight>::read(path)
-        .with_context(|| format!("failed to load FST from {}", path.display()))?;
+fn load_grammar(data: &[u8], source: &str) -> Result<Grammar> {
+    let mut fst = VectorFst::<TropicalWeight>::load(data)
+        .with_context(|| format!("failed to load {source}"))?;
     if fst.start().is_none() {
-        bail!("FST has no start state: {}", path.display());
+        bail!("FST has no start state: {source}");
     }
 
     for state in fst.states_iter() {
         for tr in fst.get_trs(state)?.trs() {
             if tr.ilabel > 255 || tr.olabel > 255 {
-                bail!(
-                    "FST contains a non-byte label at state {state}: {}",
-                    path.display()
-                );
+                bail!("FST contains a non-byte label at state {state}: {source}");
             }
         }
     }
@@ -327,6 +348,16 @@ mod tests {
         let input_labels: Vec<_> = input.bytes().map(Label::from).collect();
         let output_labels: Vec<_> = output.bytes().map(Label::from).collect();
         rustfst::utils::transducer(&input_labels, &output_labels, TropicalWeight::one())
+    }
+
+    #[test]
+    fn embedded_grammars_normalize_without_files() -> Result<()> {
+        let normalizer = InverseNormalizer::new()?;
+        assert_eq!(
+            normalizer.normalize("двадцять дві тисячі сто один")?,
+            "22101"
+        );
+        Ok(())
     }
 
     #[test]

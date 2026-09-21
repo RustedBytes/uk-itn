@@ -11,8 +11,18 @@ struct PyInverseNormalizer {
 #[pymethods]
 impl PyInverseNormalizer {
     #[new]
-    fn new(tagger_path: &str, verbalizer_path: &str) -> PyResult<Self> {
-        InverseNormalizer::from_files(tagger_path, verbalizer_path)
+    #[pyo3(signature = (tagger_path=None, verbalizer_path=None))]
+    fn new(tagger_path: Option<&str>, verbalizer_path: Option<&str>) -> PyResult<Self> {
+        let normalizer = match (tagger_path, verbalizer_path) {
+            (None, None) => InverseNormalizer::new(),
+            (Some(tagger_path), Some(verbalizer_path)) => {
+                InverseNormalizer::from_files(tagger_path, verbalizer_path)
+            }
+            _ => Err(anyhow::anyhow!(
+                "tagger_path and verbalizer_path must be provided together"
+            )),
+        };
+        normalizer
             .map(|inner| Self { inner })
             .map_err(|error| PyOSError::new_err(format!("{error:#}")))
     }
