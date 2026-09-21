@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.4.2
+
+- Moved the reusable Rust crate to the repository root and updated packaging and CI paths.
+- Updated project links and release configuration for the renamed GitHub repository.
+- Added CI and PyPI release badges to the README.
+
 ### v0.4.1
 
 - Made GitHub Release asset uploads work when the tag already has a release.

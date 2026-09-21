@@ -1,5 +1,8 @@
 # Ukrainian ITN
 
+[![CI](https://github.com/RustedBytes/ukrainian-itn/actions/workflows/ci.yml/badge.svg)](https://github.com/RustedBytes/ukrainian-itn/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/ukrainian-itn.svg)](https://pypi.org/project/ukrainian-itn/)
+
 Fast WFST-based Inverse Text Normalization (ITN) for Ukrainian. The Python package
 uses a Rust runtime and ships with compiled grammars, so using it does not require
 Pynini, OpenFST, or a C++ toolchain.
@@ -87,12 +90,12 @@ cargo build --release
 echo "двадцять дві тисячі сто один" | ./target/release/ukrainian_itn_cli  # 22101
 ```
 
-The reusable crate lives under `crates/ukrainian-itn`. Its default feature set is
-PyO3-free, so another Rust application can depend on it directly:
+The repository root is also the reusable Rust crate. Its default feature set is PyO3-free,
+so another Rust application can depend on it directly:
 
 ```toml
 [dependencies]
-ukrainian-itn = { path = "../itn-uk/crates/ukrainian-itn" }
+ukrainian-itn = { git = "https://github.com/RustedBytes/ukrainian-itn" }
 ```
 
 ```rust
@@ -141,17 +144,16 @@ uv build               # build sdist + wheel
 ## Releasing
 
 The release workflow runs when a `v*` tag is pushed. The tag must match the version in
-`pyproject.toml`, `crates/ukrainian-itn/Cargo.toml`, and `ukrainian_itn/__init__.py`:
+`pyproject.toml`, `Cargo.toml`, and `ukrainian_itn/__init__.py`:
 
 ```shell
-git tag v0.4.1
-git push origin v0.4.1
+git tag v0.4.2
+git push origin v0.4.2
 ```
 
 It builds an sdist and ABI3 wheels for Linux (x86-64 and ARM64), macOS (Intel and Apple
 Silicon), and Windows (x86-64), publishes them to PyPI, and attaches them to a GitHub
-Release. PyPI trusted publishing must be configured for the `RustedBytes/uk-itn`
+Release. PyPI trusted publishing must be configured for the `RustedBytes/ukrainian-itn`
 repository, `.github/workflows/release.yml` workflow, and `pypi` environment. The
 PyPI project name must be `ukrainian-itn` (the canonical form of the distribution
-metadata name `ukrainian_itn`), not the repository name `uk-itn` or the legacy
-distribution name `ukr-itn`.
+metadata name `ukrainian_itn`), not the legacy distribution name `ukr-itn`.

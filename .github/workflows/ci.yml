@@ -155,12 +155,11 @@ jobs:
               required_suffixes = (
                   "/Cargo.toml",
                   "/Cargo.lock",
-                  "/crates/ukrainian-itn/Cargo.toml",
-                  "/crates/ukrainian-itn/grammars/ukrainian_itn_tagger.fst",
-                  "/crates/ukrainian-itn/grammars/ukrainian_itn_verbalizer.fst",
-                  "/crates/ukrainian-itn/src/lib.rs",
-                  "/crates/ukrainian-itn/src/main.rs",
-                  "/crates/ukrainian-itn/src/python.rs",
+                  "/grammars/ukrainian_itn_tagger.fst",
+                  "/grammars/ukrainian_itn_verbalizer.fst",
+                  "/src/lib.rs",
+                  "/src/main.rs",
+                  "/src/python.rs",
               )
               missing = [suffix for suffix in required_suffixes if not any(name.endswith(suffix) for name in names)]
               if missing:

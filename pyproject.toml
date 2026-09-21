@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "ukrainian_itn"
-version = "0.4.1"
+version = "0.4.2"
 authors = [
     { name = "Vasyl Spachynskyi", email = "vspachyn@gmail.com" },
     { name = "Yehor Smoliakov", email = "egorsmkv@gmail.com" },
@@ -31,8 +31,8 @@ grammar = ["pynini>=2.1.6"]
 ukrainian-itn = "ukrainian_itn.__main__:main"
 
 [project.urls]
-"Homepage" = "https://github.com/RustedBytes/uk-itn"
-"Bug Tracker" = "https://github.com/RustedBytes/uk-itn/issues"
+"Homepage" = "https://github.com/RustedBytes/ukrainian-itn"
+"Bug Tracker" = "https://github.com/RustedBytes/ukrainian-itn/issues"
 
 [dependency-groups]
 dev = [
@@ -43,7 +43,7 @@ dev = [
 [tool.maturin]
 bindings = "pyo3"
 features = ["python"]
-manifest-path = "crates/ukrainian-itn/Cargo.toml"
+manifest-path = "Cargo.toml"
 module-name = "ukrainian_itn._rust"
 python-source = "."
 

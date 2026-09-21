@@ -32,7 +32,7 @@ jobs:
           import tomllib
 
           pyproject_version = tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"]
-          cargo_version = tomllib.loads(pathlib.Path("crates/ukrainian-itn/Cargo.toml").read_text())["package"]["version"]
+          cargo_version = tomllib.loads(pathlib.Path("Cargo.toml").read_text())["package"]["version"]
           init_source = pathlib.Path("ukrainian_itn/__init__.py").read_text()
           init_version = init_source.split('__version__ = "', 1)[1].split('"', 1)[0]
           versions = {pyproject_version, cargo_version, init_version}
